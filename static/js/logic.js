@@ -14,10 +14,6 @@ const createMap = (data) =>{
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
-    const maxDepth = Math.max(...data.features.map(feature => feature.geometry.coordinates[2]));
-    const sorted = data.features.map(feature => feature.geometry.coordinates[2]).sort((a,b) => a - b);
-    const median = sorted[Math.floor(sorted.length*.75)];
-
     function getColor(d) {
         return d > 500 ? '#800026' :
                d > 200  ? '#BD0026' :
@@ -33,6 +29,7 @@ const createMap = (data) =>{
             if (feature && feature.geometry && feature.geometry.coordinates){
                 const depth = feature.geometry.coordinates[2]
                 const mag = feature.properties.mag;
+                const location = feature.properties.place;
                 const geoMarkerOption = {
                     radius :  mag * 10000,
                     fillColor: getColor(depth),
@@ -43,15 +40,11 @@ const createMap = (data) =>{
 
                 // add all the circles
                 L.circle([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], geoMarkerOption).addTo(map).bindPopup(`<h3> Magnitude:${mag}</h3> 
-                                                                                                                                    <h3> Depth: ${depth} </h3>        `);        
+                                                                                                                                    <h3> Depth: ${depth} </h3>
+                                                                                                                                    <h3> Location: ${location} </h3>        `);        
             }
 
     };
-
-    // function onEachFeature(feature, layer){
-    //     layer.bindPopup(feature.properties.place);
-
-    // }
 
     // add geojson data
     L.geoJSON(data, {
