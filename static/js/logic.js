@@ -26,16 +26,20 @@ const createMap = (data) =>{
                     fillColor: `rgb(${normalizedColorR},${normalizedColorG},${normalizedColorB})`,
                     color: `rgb(70,70,70)`,
                     opacity: .5,
-                    fillOpacity: 1
+                    fillOpacity: 1,
                 }
-
-                L.circle([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], geoMarkerOption).addTo(map);        
+                L.circle([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], geoMarkerOption).addTo(map).bindPopup("hi");        
             }
 
     };
 
+    // function onEachFeature(feature, layer){
+    //     layer.bindPopup(feature.properties.place);
+
+    // }
+
     // add geojson data
     L.geoJSON(data, {
-        pointToLayer: pointToLayer
+        pointToLayer:pointToLayer
     }).addTo(map);
 };
