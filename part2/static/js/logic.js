@@ -4,7 +4,7 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
 
 
 const createMap = (data) =>{
-    const createTectonicPlates = (map, baseMaps, earthquakes) =>{
+    const createTectonicPlates = (map, baseMaps, earthquakeLayer) =>{
         d3.json("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json").then(
             data => {
                 //creating tectonic plates
@@ -12,7 +12,7 @@ const createMap = (data) =>{
             
                 //adding control layer
                 let overlayMaps = {
-                    Earthquake: earthquakes,
+                    Earthquake: earthquakeLayer,
                     Tectonics : tectonicsLayer
                 };
 
@@ -58,27 +58,6 @@ const createMap = (data) =>{
                           '#FFEDA0';
     }
 
-    //function creating the circles.
-    function pointToLayer(feature, latlng) {
-            if (feature && feature.geometry && feature.geometry.coordinates){
-                const depth = feature.geometry.coordinates[2]
-                const mag = feature.properties.mag;
-                const location = feature.properties.place;
-                const geoMarkerOption = {
-                    radius :  mag * 10000,
-                    fillColor: getColor(depth),
-                    color: `rgb(70,70,70)`,
-                    opacity: .5,
-                    fillOpacity: 1,
-                }
-
-                // add all the circles
-                L.circle([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], geoMarkerOption).addTo(map).bindPopup(`<h3> Magnitude:${mag}</h3> 
-                                                                                                                                    <h3> Depth: ${depth} </h3>
-                                                                                                                                    <h3> Location: ${location} </h3>        `);        
-            }
-
-    };
 
     // add legend
     let legend = L.control({position: 'bottomright'});
@@ -100,11 +79,27 @@ const createMap = (data) =>{
     legend.addTo(map);
 
     // add geojson data
-    const earthquakes = L.geoJSON(data, {
-        pointToLayer:pointToLayer
+    const earthquakes = data.features.map(feature =>{
+        const depth = feature.geometry.coordinates[2]
+                const mag = feature.properties.mag;
+                const location = feature.properties.place;
+                const geoMarkerOption = {
+                    radius :  mag * 10000,
+                    fillColor: getColor(depth),
+                    color: `rgb(70,70,70)`,
+                    opacity: .5,
+                    fillOpacity: 1,
+                }
+
+                // add all the circles
+                return L.circle([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], geoMarkerOption).bindPopup(`<h3> Magnitude:${mag}</h3> 
+                                                                                                                                    <h3> Depth: ${depth} </h3>
+                                                                                                                                    <h3> Location: ${location} </h3>`);        
     });
 
-    createTectonicPlates(map, baseMaps, earthquakes);
+    const earthquakeLayer = L.layerGroup(earthquakes)
+
+    createTectonicPlates(map, baseMaps, earthquakeLayer);
 };
 
 
