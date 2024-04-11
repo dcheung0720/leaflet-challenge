@@ -2,18 +2,51 @@ d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geoj
     data => createMap(data)
 )
 
+
 const createMap = (data) =>{
-    console.log(data);
+    const createTectonicPlates = (map, baseMaps, earthquakes) =>{
+        d3.json("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json").then(
+            data => {
+                //creating tectonic plates
+                const tectonicsLayer = L.geoJSON(data);
+            
+                //adding control layer
+                let overlayMaps = {
+                    Earthquake: earthquakes,
+                    Tectonics : tectonicsLayer
+                };
 
-    //create map
-    let map = L.map('map').setView([40, -120], 7);
 
-    //add tile layer
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                //control layer
+                L.control.layers(baseMaps, overlayMaps).addTo(map);
+            }
+        )
+    };
+
+    //street layer
+    const street =  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
+    });
 
+    //satellite layer
+    const satellite = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+                        maxZoom: 20,
+                        subdomains:['mt0','mt1','mt2','mt3']
+    });
+
+    //create map
+    let map = L.map('map', {
+        layers: [street, satellite]
+    }).setView([40, -120], 7);
+
+    //base maps
+    const baseMaps = {
+        Street: street,
+        Satellite: satellite
+    }
+
+    //color function
     function getColor(d) {
         return d > 500 ? '#800026' :
                d > 200  ? '#BD0026' :
@@ -25,6 +58,7 @@ const createMap = (data) =>{
                           '#FFEDA0';
     }
 
+    //function creating the circles.
     function pointToLayer(feature, latlng) {
             if (feature && feature.geometry && feature.geometry.coordinates){
                 const depth = feature.geometry.coordinates[2]
@@ -46,15 +80,8 @@ const createMap = (data) =>{
 
     };
 
-    // add geojson data
-    L.geoJSON(data, {
-        pointToLayer:pointToLayer
-    }).addTo(map);
-
-
     // add legend
     let legend = L.control({position: 'bottomright'});
-
     legend.onAdd = function (map) {
 
         let div = L.DomUtil.create('div', 'info legend'),
@@ -63,7 +90,6 @@ const createMap = (data) =>{
 
         // loop through our density intervals and generate a label with a colored square for each interval
         for (let i = 0; i < grades.length; i++) {
-            console.log(getColor(grades[i]))
             div.innerHTML +=
                 '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
                 grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
@@ -71,7 +97,14 @@ const createMap = (data) =>{
 
         return div;
     };
-
     legend.addTo(map);
 
+    // add geojson data
+    const earthquakes = L.geoJSON(data, {
+        pointToLayer:pointToLayer
+    });
+
+    createTectonicPlates(map, baseMaps, earthquakes);
 };
+
+
